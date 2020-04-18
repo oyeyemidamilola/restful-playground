@@ -65,13 +65,13 @@ def update_task(task_id):
     if not request.json:
         abort(400)
 
-    if 'title' in request.json and type(request.json.get('title')) is not unicode:
+    if 'title' in request.json and isinstance(request.json.get('title'), bytes):
         abort(400)
     
-    if 'description' in request.json and type(request.json.get('description')) != unicode:
+    if 'description' in request.json and isinstance(request.json.get('description'), bytes):
         abort(400)
     
-    if 'done' in request.json and type(request.json.get('done')) is not bool:
+    if 'done' in request.json and isinstance(request.json.get('done'), bytes):
         abort(400)
 
     task[0]['title'] = request.json.get('title')
@@ -79,11 +79,16 @@ def update_task(task_id):
     task[0]['done'] = request.json.get('done')
 
     return jsonify(dict(task = task[0]))
-    
 
 
+@app.route('/todo/api/v1.0/tasks/<int:task_id>', methods = ['DELETE'])
+def delete_task(task_id):
+    task = [task for task in tasks if task.get('id') == task_id]
+    if len(task) == 0:
+        abort(404)
 
-
+    tasks.remove(task[0])
+    return jsonify(dict(result = True))    
 
 
 
