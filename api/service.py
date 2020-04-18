@@ -1,20 +1,7 @@
 from flask import jsonify, abort, make_response, request
-from api import app
-
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol', 
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web', 
-        'done': False
-    }
-]
+from api import app, db
+from .utils import make_public_task
+from .models import Task
 
 @app.route('/todo/api/v1.0/tasks', methods = ['GET'])
 def get_tasks():
@@ -22,17 +9,21 @@ def get_tasks():
     """
     gets all the task resource
     """
-    return jsonify(dict(tasks = tasks))
+    tasks = Task.query.all()
+    if tasks:
+        return jsonify(dict( tasks = [make_public_task(task.to_dict()) for task in tasks] ))
+    
+    abort(404)
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods = ['GET'])
 def get_task(task_id):
 
-    task = [task for task in tasks if task.get('id') == task_id]
-    if len(task) == 0:
-        abort(404)
+    task = Task.query.get(task_id)
+    if task:    
+        return jsonify(dict( task = make_public_task( task.to_dict() ) ) )
     
-    return jsonify(dict(task = task))
+    abort(404)
 
 
 @app.route('/todo/api/v1.0/tasks', methods = ['POST'])
@@ -41,25 +32,24 @@ def create_task():
     """
     create a new task resource
     """
-
     if not request.json or not 'title' in request.json:
-        print(request.json)
         abort(400)
 
-    task = dict(
-                    id = tasks[-1].get('id') + 1,
-                    title = request.json.get('title'),
-                    description = request.json.get('description'),
-                    done = False
-                )
-    tasks.append(task)
-    return jsonify(dict(task = task)) , 201
+    task = Task()
+    task.title = request.json.get('title')
+    task.description = request.json.get('description')
+    task.done = request.json.get('done')
+    db.session.add(task)
+    db.session.commit()
+
+
+    return jsonify(dict(task = make_public_task(task.to_dict()))) , 201
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods = ['PUT'])
 def update_task(task_id):
-    task = [task for task in tasks if task.get('id') == task_id]
 
-    if len(task) == 0:
+    task = Task.query.get(task_id)
+    if not Task:
         abort(400)
 
     if not request.json:
@@ -74,21 +64,25 @@ def update_task(task_id):
     if 'done' in request.json and isinstance(request.json.get('done'), bytes):
         abort(400)
 
-    task[0]['title'] = request.json.get('title')
-    task[0]['description'] = request.json.get('description')
-    task[0]['done'] = request.json.get('done')
+    task.title = request.json.get('title')
+    task.description = request.json.get('description')
+    task.done = request.json.get('done')
+    db.session.add(task)
+    db.session.commit()
 
-    return jsonify(dict(task = task[0]))
+    return jsonify(dict(task = make_public_task(task.to_dict())))
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods = ['DELETE'])
 def delete_task(task_id):
-    task = [task for task in tasks if task.get('id') == task_id]
-    if len(task) == 0:
-        abort(404)
+    
+    task = Task.query.get(task_id)
+    if task:
+        db.session.delete(task)
+        db.session.commit()
+        return jsonify(dict(result = True)) 
 
-    tasks.remove(task[0])
-    return jsonify(dict(result = True))    
+    return abort(404)   
 
 
 
