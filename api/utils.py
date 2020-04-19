@@ -1,4 +1,6 @@
-from flask import url_for
+from flask import url_for, make_response, jsonify
+from api import auth
+
 
 
 def make_public_task(task):
@@ -12,4 +14,16 @@ def make_public_task(task):
     
     return new_task
 
+
+@auth.get_password
+def get_password(username):
+    if username == 'mcdammy':
+        return 'dammyboy'
+    
+    return None
+
+@auth.error_handler
+def unathorized():
+
+    return make_response(jsonify(dict(error = 'Unauthorized access')), 401)
 

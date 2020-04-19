@@ -1,9 +1,10 @@
 from flask import jsonify, abort, make_response, request
-from api import app, db
+from api import app, db, auth
 from .utils import make_public_task
 from .models import Task
 
 @app.route('/todo/api/v1.0/tasks', methods = ['GET'])
+@auth.login_required
 def get_tasks():
     
     """
@@ -17,6 +18,7 @@ def get_tasks():
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods = ['GET'])
+@auth.login_required
 def get_task(task_id):
 
     task = Task.query.get(task_id)
@@ -27,6 +29,7 @@ def get_task(task_id):
 
 
 @app.route('/todo/api/v1.0/tasks', methods = ['POST'])
+@auth.login_required
 def create_task():
 
     """
@@ -46,6 +49,7 @@ def create_task():
     return jsonify(dict(task = make_public_task(task.to_dict()))) , 201
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods = ['PUT'])
+@auth.login_required
 def update_task(task_id):
 
     task = Task.query.get(task_id)
@@ -74,6 +78,7 @@ def update_task(task_id):
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods = ['DELETE'])
+@auth.login_required
 def delete_task(task_id):
     
     task = Task.query.get(task_id)
