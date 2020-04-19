@@ -3,9 +3,9 @@ from api import db
 class Task(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
-    title = db.Column(db.String(30), unique = True, nullable = False)
-    description = db.Column(db.Text, unique = True, nullable = False)
-    done = db.Column(db.Boolean, unique = True, nullable = False)
+    title = db.Column(db.String(30), nullable = False)
+    description = db.Column(db.Text,  nullable = False)
+    done = db.Column(db.Boolean, nullable = False)
     
 
 
